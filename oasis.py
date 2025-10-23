@@ -3,6 +3,7 @@ import json
 import shlex
 import sys
 import argparse
+import re
 
 AUTH_TOKEN = None
 SESSION_TOKEN = None
@@ -74,6 +75,7 @@ def find_ids_at_condition(response, card, condition):
     return productId, inventoryId, lowestPrice
 
 def search_for_card(card: str):
+    safeCard = card.replace("'", "")
     curl_cmd = f"""
         curl 'https://ipi.talaria.shop/api/products/search/inventory' \
             -H 'accept: application/json' \
@@ -94,7 +96,7 @@ def search_for_card(card: str):
             -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36' \
             -H 'x-sessionid: {SESSION_TOKEN}' \
             -H 'x-storeid: f98a01b3154fe3ede1b8f7172a1d2dce' \
-            --data-raw '{{"product_line":["magic"],"is_buylist":false,"name":"{card}","aggregations":["is_sealed","condition","finish","magic_set","language"],"limit":30,"offset":0}}'
+            --data-raw '{{"product_line":["magic"],"is_buylist":false,"name":"{safeCard}","aggregations":["is_sealed","condition","finish","magic_set","language"],"limit":30,"offset":0}}'
     """ 
     response = run_curl_json(curl_cmd)
     product_id, inventory_id = find_ids(response, card)
@@ -133,7 +135,7 @@ def search_and_add_to_cart(card: str):
         print(f'Could Not Find - {card}')
     else:
         name, condition, price = add_to_cart(product_id, inventory_id)
-        print(f'Added {name} in {condition} condition to cart for {price}')
+        # print(f'Added {name} in {condition} condition to cart for {price}')
 
 def search_file(path: str): 
     try:
@@ -141,7 +143,6 @@ def search_file(path: str):
             for line in file_object:
                 card = line.strip()
                 search_and_add_to_cart(card)
-                print(f"Processing line: {card}")
     except FileNotFoundError:
         print(f"Error: File not found at '{path}'. Please check the path and try again.")
 
