@@ -135,6 +135,17 @@ def search_and_add_to_cart(card: str):
         name, condition, price = add_to_cart(product_id, inventory_id)
         print(f'Added {name} in {condition} condition to cart for {price}')
 
+def search_file(path: str): 
+    try:
+        with open(path, 'r') as file_object:
+            for line in file_object:
+                card = line.strip()
+                search_and_add_to_cart(card)
+                print(f"Processing line: {card}")
+    except FileNotFoundError:
+        print(f"Error: File not found at '{path}'. Please check the path and try again.")
+
+
 def main():
     global AUTH_TOKEN, SESSION_TOKEN
     # ---- Step 1: Define arguments ----
@@ -142,19 +153,25 @@ def main():
     parser.add_argument("-aT", "--authToken", help="Authentication token")
     parser.add_argument("-sT", "--sessionToken", help="Session token")
     parser.add_argument("-c", "--card", help="Card name to search for")
+    parser.add_argument("-p", "--path", help="Path to new line formatted file")
     args = parser.parse_args()
 
     # ---- Step 2: Fallback to interactive prompts if missing ----
     AUTH_TOKEN = args.authToken or ask_question("Enter your Auth Token")
     SESSION_TOKEN = args.sessionToken or ask_question("Enter your Session Token")
-    card = args.card or ask_question("Search for Card")
+    path = args.path
+    if(not path):
+        card = args.card or ask_question("Search for Card")
 
     # ---- Step 3: Do something with the results ----
     print(f"\nUsing Auth Token: {AUTH_TOKEN}")
     print(f"Using Session Token: {SESSION_TOKEN}")
-    print(f"Card to search: {card}\n")
-
-    search_and_add_to_cart(card)
+    if(not path):
+        print(f"Card to search: {card}\n")
+        search_and_add_to_cart(card)
+    else:
+        print(f"Searching in File {path}")
+        search_file(path)
 
 if __name__ == "__main__":
     main()
