@@ -6,3 +6,4 @@ TODO:
 
 
 ```python3 oasis.py -aT=insertAuthToken -sT=insertSessionId -c='The One Ring'```
+```python3 oasis.py -aT=insertAuthToken -sT=insertSessionId -p=gobby.txt```
