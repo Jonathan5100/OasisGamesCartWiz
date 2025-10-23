@@ -49,12 +49,29 @@ def ask_question(question: str):
 ##Todo - make this actually smarter
 ##Returns product_id, inventory_id
 def find_ids(response, card):
+    nmProductId, nmInventoryId, nmPrice = find_ids_at_condition(response, card, 'NM')
+    lpProductId, lpInventoryId, lpPrice = find_ids_at_condition(response, card, 'LP')
+
+    if(nmProductId == None or ((nmPrice*.70) > lpPrice)): #if we can't find a nmCard or the nm card is way more expensive then the LP option
+        return lpProductId, lpInventoryId
+    return nmProductId, nmInventoryId
+
+def find_ids_at_condition(response, card, condition):
+    lowestPrice = 10000
+    lookedAt = 0
+    productId = None
+    inventoryId = None
     for currentCard in response['data']:
+        if(lookedAt > 40):
+            break
         if currentCard['name'] == card:
             for inventory in currentCard['inventory']:
-                if inventory['total_quantity'] > 0:
-                    return currentCard['id'], inventory['id']
-    return None, None
+                if inventory['total_quantity'] > 0 and inventory['condition'] == condition and inventory['sell_price'] < lowestPrice:
+                    productId = currentCard['id']
+                    inventoryId = inventory['id']
+                    lowestPrice = inventory['sell_price']
+        lookedAt+=1
+    return productId, inventoryId, lowestPrice
 
 def search_for_card(card: str):
     curl_cmd = f"""
@@ -108,11 +125,15 @@ def add_to_cart(product_id: int, inventory_id: int):
         --data-raw '{{"inventory_id":{inventory_id},"quantity":1,"product_id":{product_id}}}'
     """ 
     response = run_curl_json(curl_cmd)
-    print(f'Added {response['inventory']['foreign_obj']['name']} in {response['inventory']['condition']} condition to cart for {response['inventory']['sell_price']}')
+    return response['inventory']['foreign_obj']['name'], response['inventory']['condition'], response['inventory']['sell_price']
 
 def search_and_add_to_cart(card: str):
     product_id, inventory_id = search_for_card(card)
-    add_to_cart(product_id, inventory_id)
+    if(product_id == None):
+        print(f'Could Not Find - {card}')
+    else:
+        name, condition, price = add_to_cart(product_id, inventory_id)
+        print(f'Added {name} in {condition} condition to cart for {price}')
 
 def main():
     global AUTH_TOKEN, SESSION_TOKEN
